@@ -1,8 +1,7 @@
 var isLoginUser = JSON?.parse(localStorage?.getItem("loginUserDetail"))
   ? true
   : false;
-const ENDPOINT_URL =
-  "https://lambdaapi.iysskillstech.com/latest/dev-api/";
+const ENDPOINT_URL = "https://lambdaapi.iysskillstech.com/latest/dev-api/";
 const loggedInUserApiEndpoint = `https://api.myskillsplus.com/get-skills/`;
 const loggedInUserAddSkill = `https://api.myskillsplus.com/add-skills/`;
 const deleteSkillApiEndpoint = `https://api.myskillsplus.com/delete-skill/`;
@@ -76,6 +75,7 @@ function addTosessionStorage(item) {
 
 // check selected childId is exist in  the whole localStorage data
 function findObjectByIsotFileId(array, isotFileId) {
+  console.log(array, isotFileId, "array, isotFileId");
   // Iterate through each object in the array
   for (const obj of array) {
     // Check if the RatedSkils array exists in the object
@@ -91,9 +91,51 @@ function findObjectByIsotFileId(array, isotFileId) {
       }
     }
   }
+  let userRatedSkills = JSON.parse(
+    localStorage.getItem("userRatedSkills", "[]")
+  );
+
+  console.log(userRatedSkills);
+  // example for isot_file_id =13279269.12962433.12901833.12116859
+  // get the last two id from isot_file_id in this case 12901833.12116859
+  const lastTwoId = isotFileId.split(".").slice(-2).join(".");
+  // checking it atlest have parent id
+  if (lastTwoId.split(".").length >= 2 && userRatedSkills) {
+    const foundObject = userRatedSkills.find((skill) =>
+      skill.isot_file_id.endsWith(lastTwoId)
+    );
+    if (foundObject) {
+      return foundObject;
+    }
+  }
 
   // If no match is found, return null or handle as needed
   return null;
+}
+function checkElementExist(skillDetail) {
+  console.log(skillDetail, "skillDetail");
+  let userRatedSkills = JSON.parse(
+    localStorage.getItem("userRatedSkills", "[]")
+  );
+
+  const lastTwoId = skillDetail.path_addr.split(".").slice(-2).join(".");
+  // checking it atlest have parent id
+  if (lastTwoId.split(".").length >= 2 && userRatedSkills) {
+    let foundObject = userRatedSkills.find((skill) =>
+      skill.isot_file_id.endsWith(lastTwoId)
+    );
+    if (foundObject) {
+      return foundObject;
+    }
+  }
+  let foundObject = userRatedSkills?.find((skill) =>
+    skill.isot_file_id.endsWith(skillDetail.path_addr)
+  );
+  if (foundObject) {
+    return foundObject;
+  } else {
+    return null;
+  }
 }
 
 // check selected parentId is exist in the whole local storage data
@@ -133,8 +175,8 @@ function sortRatingByLocalStorage() {
         item?.rating && item?.rating?.length > 0
           ? item?.rating[0]?.comment
           : item.ratings && item.ratings.length > 0
-            ? item.ratings[0].comment
-            : item?.comment,
+          ? item.ratings[0].comment
+          : item?.comment,
       rating: item?.rating || (item?.ratings[0] && item?.ratings[0].rating),
       isot_file_id: item?.isot_file_id || item?.isot_path_addr,
       isot_file: item?.isot_file || item?.isot_skill,
@@ -261,7 +303,7 @@ function createSelectedSkillsCount() {
     elementCountLabel.innerHTML = ` <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#219653" class="bi bi-check-circle" viewBox="0 0 16 16" style="margin: -4px 10px 0 0;" >
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
   <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
-</svg>  ${sumofAllRatings} element added to your profile <a href='/profile'> Check your profile </a> `;
+</svg>  ${sumofAllRatings} element added to your profile <a id='profile-link' href="#" onclick="openProfileTab()">Check your profile</a>`;
   } else {
     elementCountLabel.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#F2994A" class="bi bi-info-circle" viewBox="0 0 16 16" style="margin: -4px 10px 0 0;" >
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -441,7 +483,7 @@ function manageModalOnPlusOne(htmlElementForPlusOne, contentToShowInModal) {
     modalLeftSecondContent.id = "modalLeftSecondContent";
     modalLeftSecondContent.innerHTML =
       ratingGet[
-      obj?.rating.length > 0 ? obj?.rating[0]?.rating - 1 : obj?.rating - 1
+        obj?.rating.length > 0 ? obj?.rating[0]?.rating - 1 : obj?.rating - 1
       ];
     modalLeftSecondContent.style.margin = "0 0 0 10px";
     modalLeftSecondContent.style.padding = "4px 12px";
@@ -472,8 +514,9 @@ function manageModalOnPlusOne(htmlElementForPlusOne, contentToShowInModal) {
     modalRightContent.appendChild(modalRightFirstContent);
 
     const modalRightSecondContent = document.createElement("button");
-    modalRightSecondContent.id = `modalRightSecondContent-${obj?.id ? obj.id : obj?.isot_file.path_addr
-      }`;
+    modalRightSecondContent.id = `modalRightSecondContent-${
+      obj?.id ? obj.id : obj?.isot_file.path_addr
+    }`;
     modalRightSecondContent.style.background = "transparent";
     modalRightSecondContent.style.border = "none";
     modalRightSecondContent.style.margin = "0px 0px 0px 10px";
@@ -863,7 +906,7 @@ function ResetButton(htmlElement, disabled) {
   const getResetModalContainer = document.querySelector(".modal-container");
 
   htmlElement.innerHTML = `<i class="fas fa-undo"></i> Reset Changes`;
-  htmlElement.id = "ResetChanges";
+  htmlElement.id = "Reset Changes";
   htmlElement.style.padding = "5px 15px";
   htmlElement.style.borderRadius = "5px";
   htmlElement.style.border = disabled ? "" : "1px solid #007DFC";
@@ -932,7 +975,7 @@ function ResetButton(htmlElement, disabled) {
 // Function to handle API calling for  "Add Skill" button click
 function addSkillToApi(payload) {
   // API endpoint (replace with your actual API endpoint)
-  const apiEndpoint = `https://lambdaapi.iysskillstech.com/v2/add/skills?name=${payload.name}&cat=${payload.cat}&email=${payload.email}`;
+  const apiEndpoint = `https://lambdaapi.iysskillstech.com/auth/add/skills?name=${payload.name}&cat=${payload.cat}&email=${payload.email}`;
   // Make the API call using the fetch API
   return fetch(apiEndpoint, {
     method: "POST",
@@ -1084,13 +1127,6 @@ class IysSearchPlugin {
         ...this.options,
         ...config,
       };
-    }
-    if (this.options.divID) {
-      this.selectedDiv = document.getElementById(this.options.divID);
-      this.searchValue = "";
-      this.searchResultsList = [];
-    } else {
-      console.error("ApiKey  divID not set correctly ");
     }
   }
   //initi fuctions
@@ -1256,7 +1292,7 @@ class IysSearchPlugin {
       console.info("You can use 'onSearchSkillClick' to capture the skill");
     }
     this.createSkillSearchList([]);
-    if (this.options.selectedSkilldiv) {
+    if (this.selectedSkilldiv) {
       this.createSelectedSkillList();
     }
   }
@@ -1267,7 +1303,7 @@ class IysSearchPlugin {
   }
 
   createSelectedSkillList() {
-    const div = document.getElementById(this.options.selectedSkilldiv);
+    const div = document.getElementById(this.selectedSkilldiv);
     div.innerHTML = "";
 
     const ul = document.createElement("ul");
@@ -1620,7 +1656,12 @@ class IysSearchPlugin {
     modalContent.appendChild(modalButton);
 
     // Append the modal to the document body
-    document.body.appendChild(modalDiv);
+    console.warn(this.options);
+    console.warn(this.options.pluginDivId);
+
+    let pluginDiv = document.getElementById(this.options.pluginDivId);
+
+    pluginDiv.appendChild(modalDiv);
 
     function createInputContainer(labelText) {
       const container = document.createElement("div");
@@ -1634,9 +1675,15 @@ class IysSearchPlugin {
     }
   }
 
+  escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+  }
+
   searchHighlight(searched, text) {
     if (searched !== "") {
-      const searchTerms = searched.split(" ");
+      const searchTerms = searched
+        .split(" ")
+        .map((term) => this.escapeRegExp(term));
       const newText = text.replace(
         new RegExp(searchTerms.join("|"), "gi"),
         (match) => `<b>${match}</b>`
@@ -1665,13 +1712,18 @@ class IysSearchPlugin {
     div.appendChild(loader);
 
     if (isLoginUser && this.searchValue.length > 0) {
-      fetch(`https://api.myskillsplus.com/api-search/?q=${this.searchValue}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAccessToken?.access}`,
-        },
-      })
+      fetch(
+        `https://api.myskillsplus.com/api-search/?q=${encodeURIComponent(
+          this.searchValue.trim()
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAccessToken?.access}`,
+          },
+        }
+      )
         .then((response) => {
           if (response.status === 429) {
             // Redirect to /limit-exceeded/ page
@@ -1690,8 +1742,12 @@ class IysSearchPlugin {
           // Remove the loader when the API call is complete
           // div.removeChild(loader);
         });
-    } else if (this.searchValue.length > 0) {
-      fetch(`${ENDPOINT_URL}?q=${this.searchValue}&limit=10`)
+    } else if (this.searchValue.trim().length > 0) {
+      fetch(
+        `${ENDPOINT_URL}?q=${encodeURIComponent(
+          this.searchValue.trim()
+        )}&limit=10`
+      )
         .then((response) => {
           if (response.status === 429) {
             // Redirect to /limit-exceeded/ page
@@ -1702,7 +1758,10 @@ class IysSearchPlugin {
         })
         .then((response) => {
           if (this.searchValue == response.query) {
-            this.createSkillSearchList(response.matches, this.searchValue);
+            this.createSkillSearchList(
+              response.matches,
+              this.searchValue.trim()
+            );
           }
         })
         .catch((err) => console.error(err))
@@ -1718,9 +1777,7 @@ class IysSearchPlugin {
 class IysFunctionalAreasPlugin extends IysSearchPlugin {
   constructor(config) {
     super(config);
-    this.options.skillPlayground = document.getElementById(
-      this.options.skillPlayground
-    );
+    this.skillPlayground = document.getElementById(this.skillPlayground);
 
     this.ratedSkillEvent = this.options.ratedSkillEvent;
     this.options.skilFunctionalAreaDiv = document.getElementById(
@@ -1732,6 +1789,18 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     this.options.experienceProfilerAreaBox = document.getElementById(
       this.options.experienceProfilerAreaBox
     );
+    if (this.options.skillsData) {
+      console.log("updatinf thing thignd");
+      // replace with local storage
+      localStorage.setItem(
+        "userRatedSkills",
+        JSON.stringify(this.options.skillsData)
+      );
+    }
+    if (this.options?.showProfilerOnly == true) {
+      console.log("showProfilerOnly");
+    }
+
     this.fillStarImageUrl =
       "https://i.ibb.co/zxrDfTN/Screenshot-from-2023-04-29-09-48-17.png";
     this.emptyStarImageUrl =
@@ -1740,7 +1809,774 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     this.ratedSelectedSkills = [];
   }
 
+  setupDiv() {
+    // Create card div
+    var cardDiv = document.createElement("div");
+    cardDiv.className = "card";
+
+    // Create nav element
+    var navElement = document.createElement("nav");
+    navElement.className = "mb-3 border-bottom";
+    navElement.style = "padding-bottom: 1px";
+
+    // Create container div
+    var containerDiv = document.createElement("div");
+    containerDiv.className = "container-fluid d-flex justify-content-center";
+
+    // Create button container div
+    var buttonContainerDiv = document.createElement("div");
+
+    // Create ul element
+    var ulElement = document.createElement("ul");
+    ulElement.className = "nav nav-tabs";
+    ulElement.id = "myTab0";
+
+    // Create home tab li element
+    var homeLi = document.createElement("li");
+    homeLi.className = "nav-item";
+    var homeButton = document.createElement("button");
+    homeButton.setAttribute("data-mdb-tab-init", "");
+    homeButton.className = "nav-link px-4 py-3 active";
+    homeButton.id = "home-tab0";
+    homeButton.setAttribute("data-mdb-target", "#home0");
+    homeButton.type = "button";
+    homeButton.setAttribute("role", "tab");
+    homeButton.setAttribute("aria-controls", "home");
+    homeButton.setAttribute("aria-selected", "true");
+    var homeIconDiv = document.createElement("div");
+    homeIconDiv.className = "d-flex flex-column align-items-center gap-2";
+    var homeIcon = document.createElement("i");
+    homeIcon.className = "fa fa-xl fa-search py-2";
+    var homeSmall = document.createElement("small");
+    homeSmall.textContent = "Search";
+    homeIconDiv.appendChild(homeIcon);
+    homeIconDiv.appendChild(homeSmall);
+    homeButton.appendChild(homeIconDiv);
+    homeLi.appendChild(homeButton);
+
+    // Create profile tab li element
+    var profileLi = document.createElement("li");
+    profileLi.className = "nav-item";
+    var profileButton = document.createElement("button");
+    profileButton.setAttribute("data-mdb-tab-init", "");
+    profileButton.className = "nav-link px-4 py-3";
+    profileButton.id = "profile-tab0";
+    profileButton.setAttribute("data-mdb-target", "#profile0");
+    profileButton.type = "button";
+    profileButton.setAttribute("role", "tab");
+    profileButton.setAttribute("aria-controls", "profile");
+    profileButton.setAttribute("aria-selected", "false");
+    var profileIconDiv = document.createElement("div");
+    profileIconDiv.className = "d-flex flex-column align-items-center gap-2";
+    var profileIcon = document.createElement("i");
+    profileIcon.className = "fa fa-xl fa-user py-2";
+    var profileSmall = document.createElement("small");
+    profileSmall.textContent = "Profile";
+    profileIconDiv.appendChild(profileIcon);
+    profileIconDiv.appendChild(profileSmall);
+    profileButton.appendChild(profileIconDiv);
+    profileLi.appendChild(profileButton);
+
+    // Append li elements to ul element
+    ulElement.appendChild(homeLi);
+    ulElement.appendChild(profileLi);
+
+    // Append ul element to button container div
+    buttonContainerDiv.appendChild(ulElement);
+
+    // Append button container div to container div
+    containerDiv.appendChild(buttonContainerDiv);
+
+    // Append container div to nav element
+    navElement.appendChild(containerDiv);
+
+    // Append nav element to card div
+    cardDiv.appendChild(navElement);
+
+    // Create tab content div
+    var tabContentDiv = document.createElement("div");
+    tabContentDiv.className = "tab-content";
+    tabContentDiv.id = "myTabContent0";
+
+    // Create home tab pane div
+    var homeTabDiv = document.createElement("div");
+    homeTabDiv.className = "tab-pane fade show active";
+    homeTabDiv.id = "home0";
+    homeTabDiv.setAttribute("role", "tabpanel");
+    homeTabDiv.setAttribute("aria-labelledby", "home-tab0");
+
+    var cardBodyDiv = document.createElement("div");
+    cardBodyDiv.className = "card-body";
+    var searchDiv = document.createElement("div");
+    searchDiv.id = "serachid";
+    var elementCountLabelDiv = document.createElement("div");
+    elementCountLabelDiv.className = "elementCountLabel";
+    var tabContentDiv2 = document.createElement("div");
+    tabContentDiv2.className = "tab-content";
+    tabContentDiv2.id = "pills-tabContent";
+    var skillPlaygroundDiv = document.createElement("div");
+    skillPlaygroundDiv.id = "skillPlayground";
+    var replaceholderDiv = document.createElement("div");
+    replaceholderDiv.id = "replaceholder";
+
+    tabContentDiv2.appendChild(skillPlaygroundDiv);
+    tabContentDiv2.appendChild(replaceholderDiv);
+
+    cardBodyDiv.appendChild(searchDiv);
+    cardBodyDiv.appendChild(elementCountLabelDiv);
+    cardBodyDiv.appendChild(tabContentDiv2);
+    homeTabDiv.appendChild(cardBodyDiv);
+
+    // Append home tab pane div to tab content div
+    tabContentDiv.appendChild(homeTabDiv);
+
+    // Create profile tab pane div
+    var profileTabDiv = document.createElement("div");
+    profileTabDiv.className = "tab-pane fade";
+    profileTabDiv.id = "profile0";
+    profileTabDiv.setAttribute("role", "tabpanel");
+    profileTabDiv.setAttribute("aria-labelledby", "profile-tab0");
+
+    var containerFluidDiv = document.createElement("div");
+    containerFluidDiv.className = "container-fluid px-md-3 pb-md-3";
+
+    var mb4mt3Div = document.createElement("div");
+    mb4mt3Div.className = "mb-4 mt-3";
+    var h3Element = document.createElement("p");
+    h3Element.className = "h3";
+    h3Element.textContent = "Skill Profile";
+    var pElement = document.createElement("p");
+    pElement.className = "p-0 m-0";
+    pElement.textContent = "You have skills added to your profile.";
+
+    mb4mt3Div.appendChild(h3Element);
+    mb4mt3Div.appendChild(pElement);
+
+    var my3Div = document.createElement("div");
+    my3Div.className = "my-3";
+
+    var navPillsDiv = document.createElement("div");
+    navPillsDiv.className = "nav nav-pills m-0";
+    navPillsDiv.id = "viewsTab";
+
+    var btnGroupDiv = document.createElement("div");
+    btnGroupDiv.className = "btn-group border";
+    btnGroupDiv.setAttribute("role", "group");
+    btnGroupDiv.setAttribute("aria-label", "Three views");
+    btnGroupDiv.style = "padding: 1px";
+
+    var quickTabButton = createTabButton(
+      "quick-tab",
+      "#quick-tab-content",
+      "fa-wand-magic-sparkles",
+      "Quick View"
+    );
+    var tabularTabButton = createTabButton(
+      "tabular-tab",
+      "#tabular-tab-content",
+      "fa-table",
+      "Tabular View"
+    );
+
+    btnGroupDiv.appendChild(quickTabButton);
+    btnGroupDiv.appendChild(tabularTabButton);
+
+    navPillsDiv.appendChild(btnGroupDiv);
+
+    my3Div.appendChild(navPillsDiv);
+
+    var tabContentDiv3 = document.createElement("div");
+    tabContentDiv3.className = "tab-content card shadow border p-3";
+    tabContentDiv3.id = "viewsTabContent0";
+
+    var quickTabContentDiv = document.createElement("div");
+    quickTabContentDiv.className = "tab-pane fade show active";
+    quickTabContentDiv.id = "quick-tab-content";
+    quickTabContentDiv.setAttribute("role", "tabpanel");
+    quickTabContentDiv.setAttribute("aria-labelledby", "home-tab0");
+
+    var h5QuickView = document.createElement("p");
+    h5QuickView.className = "h5";
+    h5QuickView.textContent = "Quick View";
+    var pQuickView = document.createElement("p");
+    pQuickView.className = "p-0 m-0";
+    pQuickView.textContent =
+      "Presents your skills, proficiencies, and notes on the skills. Easy to know what all skills you have";
+    var quickViewContentDiv = document.createElement("div");
+    quickViewContentDiv.id = "quickViewContentDiv";
+
+    quickTabContentDiv.appendChild(h5QuickView);
+    quickTabContentDiv.appendChild(pQuickView);
+    quickTabContentDiv.appendChild(quickViewContentDiv);
+
+    var tabularTabContentDiv = document.createElement("div");
+    tabularTabContentDiv.className = "tab-pane fade";
+    tabularTabContentDiv.id = "tabular-tab-content";
+    tabularTabContentDiv.setAttribute("role", "tabpanel");
+    tabularTabContentDiv.setAttribute("aria-labelledby", "profile-tab0");
+
+    var h5TabularView = document.createElement("p");
+    h5TabularView.className = "h5";
+    h5TabularView.textContent = "Tabular View";
+    var pTabularView = document.createElement("p");
+    pTabularView.className = "p-0 m-0";
+    pTabularView.textContent =
+      "Presents your skills in a logical and organized way, like that in our report cards in school.";
+    var brElement = document.createElement("br");
+    var tabularViewContentViewDiv = document.createElement("div");
+    tabularViewContentViewDiv.id = "tabularViewContentView";
+    var accordionDiv = document.createElement("div");
+    accordionDiv.className = "accordion d-none";
+    accordionDiv.id = "accordionPanelsStayOpenExample";
+    var accordionItemDiv = document.createElement("div");
+    accordionItemDiv.className = "accordion-item";
+    var accordionButton = document.createElement("button");
+    accordionButton.setAttribute("data-mdb-collapse-init", "");
+    accordionButton.className = "accordion-button";
+    accordionButton.type = "button";
+    accordionButton.setAttribute("data-mdb-toggle", "collapse");
+    accordionButton.setAttribute(
+      "data-mdb-target",
+      "#panelsStayOpen-collapseOne"
+    );
+    accordionButton.setAttribute("aria-expanded", "true");
+    accordionButton.setAttribute("aria-controls", "panelsStayOpen-collapseOne");
+    accordionButton.style = "background-color: #eff5ff";
+
+    accordionItemDiv.appendChild(accordionButton);
+    accordionDiv.appendChild(accordionItemDiv);
+
+    tabularTabContentDiv.appendChild(h5TabularView);
+    tabularTabContentDiv.appendChild(pTabularView);
+    tabularTabContentDiv.appendChild(brElement);
+    tabularTabContentDiv.appendChild(tabularViewContentViewDiv);
+    tabularTabContentDiv.appendChild(accordionDiv);
+
+    tabContentDiv3.appendChild(quickTabContentDiv);
+    tabContentDiv3.appendChild(tabularTabContentDiv);
+
+    containerFluidDiv.appendChild(mb4mt3Div);
+    containerFluidDiv.appendChild(my3Div);
+    containerFluidDiv.appendChild(tabContentDiv3);
+
+    profileTabDiv.appendChild(containerFluidDiv);
+
+    tabContentDiv.appendChild(profileTabDiv);
+
+    // Create modal div
+    var modalDiv = document.createElement("div");
+    modalDiv.className = "modal top fade";
+    modalDiv.id = "RateSkillModel";
+    modalDiv.tabIndex = "-1";
+    modalDiv.setAttribute("aria-labelledby", "RateSkillModelLabel");
+    modalDiv.setAttribute("aria-hidden", "true");
+    modalDiv.setAttribute("data-mdb-backdrop", "true");
+    modalDiv.setAttribute("data-mdb-keyboard", "true");
+
+    // Create modal dialog div
+    var modalDialogDiv = document.createElement("div");
+    modalDialogDiv.className = "modal-dialog modal-xl modal-dialog-centered";
+
+    // Create modal content div
+    var modalContentDiv = document.createElement("div");
+    modalContentDiv.className = "modal-content";
+
+    // Create modal header div
+    var modalHeaderDiv = document.createElement("div");
+    modalHeaderDiv.className = "modal-header";
+
+    // Create modal title paragraph
+    var modalTitleParagraph = document.createElement("p");
+    modalTitleParagraph.className = "modal-title";
+    modalTitleParagraph.id = "RateSkillModelLabel";
+    modalTitleParagraph.textContent = "Modal title";
+
+    // Create close button
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "btn-close";
+    closeButton.setAttribute("data-mdb-dismiss", "modal");
+    closeButton.setAttribute("aria-label", "Close");
+
+    // Append modal title and close button to modal header
+    modalHeaderDiv.appendChild(modalTitleParagraph);
+    modalHeaderDiv.appendChild(closeButton);
+
+    // Create modal body div
+    var modalBodyDiv = document.createElement("div");
+    modalBodyDiv.className = "modal-body";
+
+    // Create span element for star
+    var spanElementForStar = document.createElement("div");
+    spanElementForStar.id = "spanElementForStar";
+    spanElementForStar.style.marginLeft = "0px";
+    spanElementForStar.style.marginRight = "0px";
+
+    // Create label for "Remark"
+    var remarkLabel = document.createElement("label");
+    remarkLabel.className = "fw-bold";
+    remarkLabel.textContent = "Remark";
+
+    // Create form outline div
+    var formOutlineDiv = document.createElement("div");
+    formOutlineDiv.className = "form-outline";
+
+    // Create textarea for "rateSkillCommentBox"
+    var rateSkillCommentBoxTextarea = document.createElement("textarea");
+    rateSkillCommentBoxTextarea.className = "form-control form-control-lg";
+    rateSkillCommentBoxTextarea.id = "rateSkillCommentBox";
+    rateSkillCommentBoxTextarea.rows = "4";
+    rateSkillCommentBoxTextarea.setAttribute("data-mdb-showcounter", "true");
+    rateSkillCommentBoxTextarea.maxLength = "100";
+
+    // Create label for "rateSkillCommentBox"
+    var rateSkillCommentBoxLabel = document.createElement("label");
+    rateSkillCommentBoxLabel.className = "form-label";
+    rateSkillCommentBoxLabel.setAttribute("for", "rateSkillCommentBox");
+    rateSkillCommentBoxLabel.textContent = "Enter Remark (20-100 characters)";
+
+    // Create form helper div
+    var formHelperDiv = document.createElement("div");
+    formHelperDiv.className = "form-helper";
+
+    // Append textarea, label, and form helper to form outline div
+    formOutlineDiv.appendChild(rateSkillCommentBoxTextarea);
+    formOutlineDiv.appendChild(rateSkillCommentBoxLabel);
+    formOutlineDiv.appendChild(formHelperDiv);
+
+    // Append elements to modal body
+    modalBodyDiv.appendChild(spanElementForStar);
+    modalBodyDiv.appendChild(remarkLabel);
+    modalBodyDiv.appendChild(formOutlineDiv);
+
+    // Create modal footer div
+    var modalFooterDiv = document.createElement("div");
+    modalFooterDiv.className = "modal-footer";
+
+    // Create span element for save button
+    var spanElementForSaveButton = document.createElement("span");
+    spanElementForSaveButton.id = "spanElementForSaveButton";
+
+    // Append span element to modal footer
+    modalFooterDiv.appendChild(spanElementForSaveButton);
+
+    // Append modal header, body, and footer to modal content
+    modalContentDiv.appendChild(modalHeaderDiv);
+    modalContentDiv.appendChild(modalBodyDiv);
+    modalContentDiv.appendChild(modalFooterDiv);
+
+    // Append modal content to modal dialog
+    modalDialogDiv.appendChild(modalContentDiv);
+
+    // Append modal dialog to modal div
+    modalDiv.appendChild(modalDialogDiv);
+
+    // Append modal div to document body
+    cardDiv.appendChild(modalDiv);
+
+    cardDiv.appendChild(tabContentDiv);
+
+    // /dkslgfkdffmg
+
+    // Create modal container div
+    var resetModalContainer = document.createElement("div");
+    resetModalContainer.id = "resetModalContainer";
+    resetModalContainer.className = "modal-container";
+
+    // Create modal content div
+    var confirmModal = document.createElement("div");
+    confirmModal.id = "confirmModal";
+    confirmModal.className = "modal-content";
+
+    // Create reset title div
+    var resetTitleDiv = document.createElement("div");
+    resetTitleDiv.className = "reset-title";
+
+    // Create reset title paragraph
+    var resetTitleParagraph = document.createElement("p");
+    resetTitleParagraph.textContent = "Reset Confirm";
+
+    // Create close button
+    var closeModalSpan = document.createElement("span");
+    closeModalSpan.id = "closeModal";
+    closeModalSpan.className = "close-button";
+    closeModalSpan.innerHTML = "&times;";
+
+    // Append title paragraph and close button to reset title div
+    resetTitleDiv.appendChild(resetTitleParagraph);
+    resetTitleDiv.appendChild(closeModalSpan);
+
+    // Create HR line
+    var resetHrLine = document.createElement("hr");
+    resetHrLine.className = "reset-hr-line";
+
+    // Create reset message paragraph
+    var resetMessageParagraph = document.createElement("p");
+    resetMessageParagraph.className = "reset-message";
+    resetMessageParagraph.textContent = "Are you sure you want to reset?";
+
+    // Create confirm button
+    var confirmResetButton = document.createElement("button");
+    confirmResetButton.id = "confirmReset";
+    confirmResetButton.className = "confirm-button";
+    confirmResetButton.textContent = "Confirm";
+
+    // Append elements to modal content div
+    confirmModal.appendChild(resetTitleDiv);
+    confirmModal.appendChild(resetHrLine);
+    confirmModal.appendChild(resetMessageParagraph);
+    confirmModal.appendChild(confirmResetButton);
+
+    // Append modal content to modal container div
+    resetModalContainer.appendChild(confirmModal);
+
+    // Append modal container div to document body
+    cardDiv.appendChild(resetModalContainer);
+
+    // Create modal div
+    var modalDiv = document.createElement("div");
+    modalDiv.className = "modal top fade show active";
+    modalDiv.id = "RateSkillModel";
+    modalDiv.tabIndex = "-1";
+    modalDiv.setAttribute("aria-labelledby", "RateSkillModelLabel");
+    modalDiv.setAttribute("aria-hidden", "true");
+    modalDiv.setAttribute("data-mdb-backdrop", "true");
+    modalDiv.setAttribute("data-mdb-keyboard", "true");
+
+    // Create modal dialog div
+    var modalDialogDiv = document.createElement("div");
+    modalDialogDiv.className = "modal-dialog modal-xl modal-dialog-centered";
+
+    // Create modal content div
+    var modalContentDiv = document.createElement("div");
+    modalContentDiv.className = "modal-content";
+
+    // Create modal header div
+    var modalHeaderDiv = document.createElement("div");
+    modalHeaderDiv.className = "modal-header";
+
+    // Create modal title paragraph
+    var modalTitleParagraph = document.createElement("p");
+    modalTitleParagraph.className = "modal-title";
+    modalTitleParagraph.id = "RateSkillModelLabel";
+    modalTitleParagraph.textContent = "Modal title";
+
+    // Create close button
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "btn-close";
+    closeButton.setAttribute("data-mdb-dismiss", "modal");
+    closeButton.setAttribute("aria-label", "Close");
+    closeButton.id = "RateSkillModelBtn";
+
+    // Append modal title and close button to modal header
+    modalHeaderDiv.appendChild(modalTitleParagraph);
+    modalHeaderDiv.appendChild(closeButton);
+
+    // Create modal body div
+    var modalBodyDiv = document.createElement("div");
+    modalBodyDiv.className = "modal-body";
+
+    // Create span element for star
+    var spanElementForStar = document.createElement("div");
+    spanElementForStar.id = "spanElementForStar";
+    spanElementForStar.style.marginLeft = "0px";
+    spanElementForStar.style.marginRight = "0px";
+
+    // Create label for "Remark"
+    var remarkLabel = document.createElement("label");
+    remarkLabel.className = "fw-bold";
+    remarkLabel.textContent = "Remark";
+    remarkLabel.style.marginBottom = "5px";
+    remarkLabel.style.marginTop = "5px";
+
+    // Create form outline div
+    var formOutlineDiv = document.createElement("div");
+    formOutlineDiv.className = "form-outline";
+
+    // Create textarea for "rateSkillCommentBox"
+    var rateSkillCommentBoxTextarea = document.createElement("textarea");
+    rateSkillCommentBoxTextarea.className = "form-control form-control-lg";
+    rateSkillCommentBoxTextarea.id = "rateSkillCommentBox";
+    rateSkillCommentBoxTextarea.rows = "4";
+    rateSkillCommentBoxTextarea.setAttribute("data-mdb-showcounter", "true");
+    rateSkillCommentBoxTextarea.maxLength = "100";
+
+    // Create label for "rateSkillCommentBox"
+    var rateSkillCommentBoxLabel = document.createElement("label");
+    rateSkillCommentBoxLabel.className = "form-label";
+    rateSkillCommentBoxLabel.setAttribute("for", "rateSkillCommentBox");
+    rateSkillCommentBoxLabel.textContent = "Enter Remark (20-100 characters)";
+
+    // Create form helper div
+    var formHelperDiv = document.createElement("div");
+    formHelperDiv.className = "form-helper";
+
+    // Append textarea, label, and form helper to form outline div
+    formOutlineDiv.appendChild(rateSkillCommentBoxTextarea);
+    formOutlineDiv.appendChild(rateSkillCommentBoxLabel);
+    formOutlineDiv.appendChild(formHelperDiv);
+
+    // Append elements to modal body
+    modalBodyDiv.appendChild(spanElementForStar);
+    modalBodyDiv.appendChild(remarkLabel);
+    modalBodyDiv.appendChild(formOutlineDiv);
+
+    // Create modal footer div
+    var modalFooterDiv = document.createElement("div");
+    modalFooterDiv.className = "modal-footer";
+
+    // Create span element for save button
+    var spanElementForSaveButton = document.createElement("span");
+    spanElementForSaveButton.id = "spanElementForSaveButton";
+
+    // Append span element to modal footer
+    modalFooterDiv.appendChild(spanElementForSaveButton);
+
+    // Append modal header, body, and footer to modal content
+    modalContentDiv.appendChild(modalHeaderDiv);
+    modalContentDiv.appendChild(modalBodyDiv);
+    modalContentDiv.appendChild(modalFooterDiv);
+
+    // Append modal content to modal dialog
+    modalDialogDiv.appendChild(modalContentDiv);
+
+    // Append modal dialog to modal div
+    modalDiv.appendChild(modalDialogDiv);
+
+    // Append modal div to document body
+    cardDiv.appendChild(modalDiv);
+    // kljdsfkgdf
+
+    // Create tab pane div
+    var tabPaneDiv = document.createElement("div");
+    tabPaneDiv.className = "tab-pane fade";
+    tabPaneDiv.id = "profile0";
+    tabPaneDiv.setAttribute("role", "tabpanel");
+    tabPaneDiv.setAttribute("aria-labelledby", "profile-tab0");
+
+    // Create container fluid div
+    var containerFluidDiv = document.createElement("div");
+    containerFluidDiv.className = "container-fluid px-md-3 pb-md-3";
+
+    // Create heading and description div
+    var headingDescriptionDiv = document.createElement("div");
+    headingDescriptionDiv.className = "mb-4 mt-3";
+
+    // Create heading paragraph
+    var headingParagraph = document.createElement("p");
+    headingParagraph.className = "h3";
+    headingParagraph.textContent = "Skill Profile";
+
+    // Create description paragraph
+    var descriptionParagraph = document.createElement("p");
+    descriptionParagraph.className = "p-0 m-0";
+    descriptionParagraph.textContent = "You have skills added to your profile.";
+
+    // Append heading and description paragraphs to their parent div
+    headingDescriptionDiv.appendChild(headingParagraph);
+    headingDescriptionDiv.appendChild(descriptionParagraph);
+
+    // Create navigation tab div
+    var navTabDiv = document.createElement("div");
+    navTabDiv.className = "my-3";
+
+    // Create nav pills div
+    var navPillsDiv = document.createElement("div");
+    navPillsDiv.className = "nav nav-pills m-0";
+    navPillsDiv.id = "viewsTab";
+    navPillsDiv.setAttribute("role", "tablist");
+
+    // Create btn group div
+    var btnGroupDiv = document.createElement("div");
+    btnGroupDiv.className = "btn-group border";
+    btnGroupDiv.setAttribute("role", "group");
+    btnGroupDiv.setAttribute("aria-label", "Three views");
+    btnGroupDiv.style.padding = "1px";
+
+    // Create quick view button
+    var quickTabButton = document.createElement("button");
+    quickTabButton.setAttribute("data-mdb-tab-init", "");
+    quickTabButton.className = "p-3 btn nav-link active";
+    quickTabButton.id = "quick-tab";
+    quickTabButton.setAttribute("data-mdb-target", "#quick-tab-content");
+    quickTabButton.type = "button";
+    quickTabButton.setAttribute("role", "tab");
+    quickTabButton.setAttribute("aria-controls", "home");
+    quickTabButton.setAttribute("aria-selected", "true");
+    quickTabButton.setAttribute("data-mdb-ripple-init", "true");
+    quickTabButton.innerHTML =
+      '<i class="fa fa-wand-magic-sparkles me-1"></i> Quick View';
+
+    // Create tabular view button
+    var tabularTabButton = document.createElement("button");
+    tabularTabButton.setAttribute("data-mdb-tab-init", "");
+    tabularTabButton.className = "p-3 btn nav-link";
+    tabularTabButton.id = "tabular-tab";
+    tabularTabButton.setAttribute("data-mdb-target", "#tabular-tab-content");
+    tabularTabButton.type = "button";
+    tabularTabButton.setAttribute("role", "tab");
+    tabularTabButton.setAttribute("aria-controls", "profile");
+    tabularTabButton.setAttribute("aria-selected", "false");
+    tabularTabButton.setAttribute("data-mdb-ripple-init", "true");
+    tabularTabButton.innerHTML =
+      '<i class="fa fa-table me-1"></i> Tabular View';
+
+    // Append quick view and tabular view buttons to btn group div
+    btnGroupDiv.appendChild(quickTabButton);
+    btnGroupDiv.appendChild(tabularTabButton);
+
+    // Append btn group div to nav pills div
+    navPillsDiv.appendChild(btnGroupDiv);
+
+    // Append nav pills div to nav tab div
+    navTabDiv.appendChild(navPillsDiv);
+
+    // Create tab content div
+    var tabContentDiv = document.createElement("div");
+    tabContentDiv.className = "tab-content card shadow border p-3";
+    tabContentDiv.id = "viewsTabContent0";
+
+    // Create quick view content div
+    var quickViewContentDiv = document.createElement("div");
+    quickViewContentDiv.id = "quickViewContentDiv";
+
+    // Create tabular view content div
+    var tabularViewContentViewDiv = document.createElement("div");
+    tabularViewContentViewDiv.id = "tabularViewContentView";
+
+    // Create quick view tab pane div
+    var quickViewTabPaneDiv = document.createElement("div");
+    quickViewTabPaneDiv.className = "tab-pane fade show active";
+    quickViewTabPaneDiv.id = "quick-tab-content";
+    quickViewTabPaneDiv.setAttribute("role", "tabpanel");
+    quickViewTabPaneDiv.setAttribute("aria-labelledby", "home-tab0");
+
+    // Create quick view content heading
+    var quickViewHeading = document.createElement("p");
+    quickViewHeading.className = "h5";
+    quickViewHeading.textContent = "Quick View";
+
+    // Create quick view content description
+    var quickViewDescription = document.createElement("p");
+    quickViewDescription.className = "p-0 m-0";
+    quickViewDescription.textContent =
+      "Presents your skills, proficiencies, and notes on the skills. Easy to know what all skills you have";
+
+    // Append quick view heading, description, and content div to quick view tab pane div
+    quickViewTabPaneDiv.appendChild(quickViewHeading);
+    quickViewTabPaneDiv.appendChild(quickViewDescription);
+    quickViewTabPaneDiv.appendChild(quickViewContentDiv);
+
+    // Create tabular view tab pane div
+    var tabularViewTabPaneDiv = document.createElement("div");
+    tabularViewTabPaneDiv.className = "tab-pane fade";
+    tabularViewTabPaneDiv.id = "tabular-tab-content";
+    tabularViewTabPaneDiv.setAttribute("role", "tabpanel");
+    tabularViewTabPaneDiv.setAttribute("aria-labelledby", "profile-tab0");
+
+    // Create tabular view content heading
+    var tabularViewHeading = document.createElement("p");
+    tabularViewHeading.className = "h5";
+    tabularViewHeading.textContent = "Tabular View";
+
+    // Create tabular view content description
+    var tabularViewDescription = document.createElement("p");
+    tabularViewDescription.className = "p-0 m-0";
+    tabularViewDescription.textContent =
+      "Presents your skills in a logical and organized way, like that in our report cards in school.";
+
+    // Create br element
+    var brElement = document.createElement("br");
+
+    // Create accordion div
+    var accordionDiv = document.createElement("div");
+    accordionDiv.className = "accordion d-none";
+    accordionDiv.id = "accordionPanelsStayOpenExample";
+
+    // Create accordion item div
+    var accordionItemDiv = document.createElement("div");
+    accordionItemDiv.className = "accordion-item";
+
+    // Create accordion button
+    var accordionButton = document.createElement("button");
+    accordionButton.setAttribute("data-mdb-collapse-init", "");
+    accordionButton.className = "accordion-button";
+    accordionButton.type = "button";
+    accordionButton.setAttribute("data-mdb-toggle", "collapse");
+    accordionButton.setAttribute(
+      "data-mdb-target",
+      "#panelsStayOpen-collapseOne"
+    );
+    accordionButton.setAttribute("aria-expanded", "true");
+    accordionButton.setAttribute("aria-controls", "panelsStayOpen-collapseOne");
+    accordionButton.style.backgroundColor = "#eff5ff";
+
+    // Append accordion button to accordion item div
+    accordionItemDiv.appendChild(accordionButton);
+
+    // Append accordion item div to accordion div
+    accordionDiv.appendChild(accordionItemDiv);
+
+    // Append tabular view heading, description, br element, tabular view content div, accordion div, and content div to tabular view tab pane div
+    tabularViewTabPaneDiv.appendChild(tabularViewHeading);
+    tabularViewTabPaneDiv.appendChild(tabularViewDescription);
+    tabularViewTabPaneDiv.appendChild(brElement);
+    tabularViewTabPaneDiv.appendChild(tabularViewContentViewDiv);
+    tabularViewTabPaneDiv.appendChild(accordionDiv);
+
+    // Append quick view and tabular view tab panes to tab content div
+    tabContentDiv.appendChild(quickViewTabPaneDiv);
+    tabContentDiv.appendChild(tabularViewTabPaneDiv);
+
+    // Append heading and description div, nav tab div, tab content div to container fluid div
+    containerFluidDiv.appendChild(headingDescriptionDiv);
+    containerFluidDiv.appendChild(navTabDiv);
+    containerFluidDiv.appendChild(tabContentDiv);
+
+    // Append container fluid div to tab pane div
+    tabPaneDiv.appendChild(containerFluidDiv);
+
+    // Append tab pane div to document body
+    cardDiv.appendChild(tabPaneDiv);
+
+    // mndnfgmnfnjkghf
+
+    document.body.appendChild(cardDiv);
+
+    // Function to create tab button
+    function createTabButton(id, dataTarget, iconClass, labelText) {
+      var button = document.createElement("button");
+      button.setAttribute("data-mdb-tab-init", "");
+
+      if (id == "quick-tab") {
+        button.className = "p-3 btn nav-link active";
+      } else {
+        button.className = "p-3 btn nav-link";
+      }
+
+      button.id = id;
+      button.setAttribute("data-mdb-target", dataTarget);
+      button.type = "button";
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-controls", "home");
+      button.setAttribute("aria-selected", "true");
+      var iconElement = document.createElement("i");
+      iconElement.className = `fa ${iconClass} me-1`;
+      button.appendChild(iconElement);
+      button.innerHTML += labelText;
+      return button;
+    }
+
+    this.updateProfileData();
+  }
+
   async init() {
+    this.setupDiv();
+    this.selectedDiv = document.getElementById("serachid");
+    this.selectedSkillDiv = document.getElementById("selectSkill");
+
+    this.skillPlayground = document.getElementById("skillPlayground");
     if (isLoginUser) {
       //  For rating saved
       const transformSkillList = transformDataFromLocalStorage(
@@ -1772,7 +2608,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
             );
           }
 
-          this.createListProfileSkills();
+          // this.createListProfileSkills();
         });
       } else {
         await getListFromLoggedInUser();
@@ -1784,14 +2620,15 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     this.createPlayground();
     // this.createAreaBox();
     // this.crea
-    this.createRateSelectedSkills(this.options.skillPlayground);
-    this.createListProfileSkills();
+    this.createRateSelectedSkills(this.skillPlayground);
+    // this.createListProfileSkills();
   }
+
   createPlayground() {
     this.selectedASkillBox = document.createElement("div");
     this.selectedASkillBox.classList.add("selected-skill-div");
     this.selectedASkillBox.id = "selected-skill-div";
-    this.options.skillPlayground.appendChild(this.selectedASkillBox);
+    this.skillPlayground.appendChild(this.selectedASkillBox);
   }
 
   skillClick(skillListId) {
@@ -1801,7 +2638,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
   }
 
   createSelectedSkillList(htmlElement) {
-    const div = document.getElementById(this.options.selectedSkilldiv);
+    const div = document.getElementById(this.selectedSkilldiv);
     div.innerHTML = "";
 
     const ul = document.createElement("ul");
@@ -1950,10 +2787,11 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           manageTooltip(
             infoDesBtn,
             `<div>
-          ${skillDetail.description !== null
+          ${
+            skillDetail.description !== null
               ? `<p>${skillDetail.description}</p>`
               : ""
-            }
+          }
         </div>`
           );
         }
@@ -2179,7 +3017,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
 
           const returnAccordionIcon =
             subElementSpan &&
-              subElementSpan.classList.contains("accordion-true")
+            subElementSpan.classList.contains("accordion-true")
               ? "fas fa-minus"
               : "fas fa-plus";
 
@@ -2309,7 +3147,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
         var ratedButton = document.getElementById("rateBtn");
         ratedButton.style.backgroundColor = "#21965333";
         ratedButton.textContent = "rated";
-        ratedButton.innerHTML += `  <i class="fas fa-star"></i>`;
+        ratedButton.innerHTML += `<i class="fas fa-star"></i>`;
         ratedButton.style.color = "black";
         ratedButton.style.fontWeight = "normal";
       }
@@ -2343,6 +3181,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
               toastr.success(
                 `Adding Skill ${skillDetail.name}  Added to profile`
               );
+              updateProfileData();
               await getListFromLoggedInUser("notLoadded");
               myrate();
               if (skillDetail?.path_addr) {
@@ -2369,31 +3208,54 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
 
               saveButtonElement.removeChild(loader);
               saveButtonElement.innerHTML = previousContent;
+              this.updateProfileData();
             }
           })
           .catch((error) => {
             if (loader && saveButtonElement) {
               saveButtonElement.removeChild(loader);
               saveButtonElement.innerHTML = previousContent;
+              this.updateProfileData();
             }
             // Handle network errors
             console.error("Error:", error);
           });
       }
     } else {
-      fetchData(
-        `${ENDPOINT_URL}details/?path_addrs=${skillDetail?.path_addr}`,
-        "GET"
-      )
+      console.log("creating parent for you", parentSkillDetailId);
+
+      let url = "";
+      if (parentSkillDetailId) {
+        url = `${ENDPOINT_URL}details/?path_addrs=${skillDetail?.path_addr}&path_addrs=${parentSkillDetailId}`;
+      } else {
+        url = `${ENDPOINT_URL}details/?path_addrs=${skillDetail?.path_addr}`;
+      }
+
+      fetchData(url, "GET")
         .then((response) => {
-          addTolocalStorage({
-            comment: commentValue,
-            rating: ratingValue,
-            isot_file_id: skillDetail?.path_addr,
-            isot_file: response[0],
-            parentSkillDetailId: parentSkillDetailId,
-          });
+          if (parentSkillDetailId) {
+            console.log("creating parent for you", parentSkillDetailId);
+            addTolocalStorage({
+              comment: commentValue,
+              rating: ratingValue,
+              isot_file_id: skillDetail?.path_addr,
+              isot_file: response[0],
+              parentSkillDetailId: parentSkillDetailId,
+              parentSkillDetail: response[1],
+            });
+          } else {
+            addTolocalStorage({
+              comment: commentValue,
+              rating: ratingValue,
+              isot_file_id: skillDetail?.path_addr,
+              isot_file: response[0],
+              parentSkillDetailId: parentSkillDetailId,
+              parentSkillDetail: null,
+            });
+          }
+
           toastr.success(`Adding Skill ${skillDetail.name}  Added to profile`);
+          this.updateProfileData();
           myrate();
           // document.getElementById(parentSkillDetailId).innerHTML = "";
           // document.getElementById("parent-" + parentSkillDetailId).click();
@@ -2451,6 +3313,11 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
         titleText = skillDetail.name;
       }
     }
+    console.log("skillDetail", skillDetail);
+
+    let objExist = checkElementExist(skillDetail);
+
+    console.log("objExist", objExist);
     const modalContent = RateSkillModel.querySelector(".modal-content");
     if (modalContent) {
       modalContent.style.padding = "20px"; // Adjust the border style as needed
@@ -2459,7 +3326,11 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     if (modalHeader) {
       modalHeader.style.borderBottom = "1px solid #ccc"; // Adjust the border style as needed
     }
-    rateSkillCommentBox.value = "";
+    if (objExist) {
+      rateSkillCommentBox.value = objExist.comment;
+    } else {
+      rateSkillCommentBox.value = "";
+    }
     const modalEl = new mdb.Modal(RateSkillModel);
     RateSkillModelLabel.style.fontSize = "17px";
     RateSkillModelLabel.innerHTML = `<span style="color: #333333; font-weight:600">Ratings </span>
@@ -2469,12 +3340,15 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     this.createRatingElement(
       spanElementForStar,
       skillDetail,
-      parentSkillDetailId
+      parentSkillDetailId,
+      objExist
     );
     button.removeEventListener("click", this.saveTheSkillComment);
 
     button.addEventListener("click", (event) => {
       modalEl.hide();
+      // updating view
+      this.updateProfileData();
     });
     modalEl.show();
   }
@@ -2543,7 +3417,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
   }
 
   //###############################################################       get Rating model section data   #############################
-  createRatingElement(htmlElement, skillDetail, parentSkillDetailId) {
+  createRatingElement(htmlElement, skillDetail, parentSkillDetailId, objExist) {
     // add exception for rating
     try {
       htmlElement.noUiSlider.destroy();
@@ -2576,47 +3450,93 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
             radioContainer.style.marginRight = "10px";
             let radioInput = document.createElement("input");
             radioInput.type = "radio";
-            radioInput.name = `rating-${sliderObj._id}`;
+            radioInput.name = `${sliderObj._id}`;
             radioInput.value = index + 1;
             radioInput.checked = index === 0;
-            radioInput.id = `${sliderObj._id}-${index}`;
+            radioInput.id = `rating-${sliderObj._id}-${index + 1}`;
             radioInput.className = "radio-input";
             let radioLabel = document.createElement("label");
-            radioLabel.htmlFor = `${sliderObj._id}-${index}`;
+            radioLabel.htmlFor = `${sliderObj._id}`;
             radioLabel.textContent = option;
             radioLabel.className = "radio-label";
             radioLabel.style.marginLeft = "5px";
             radioContainer.appendChild(radioInput);
             radioContainer.appendChild(radioLabel);
             spanSliderInnerDiv.appendChild(radioContainer);
+
+            if (objExist) {
+              // check if the rating is already exist
+              objExist.rating.forEach((obj) => {
+                if (obj.isot_rating_id === sliderObj._id) {
+                  if (obj.rating === index + 1) {
+                    radioInput.checked = true;
+                  }
+                }
+              });
+            }
           });
         } else {
           // Creating a slider
+          console.log("options", options);
           var format = {
             to: function (value) {
-              return options[Math.round(value - 1)];
+              return options[Math.round(value)];
             },
             from: function (value) {
+              console.warn("from", value, options.indexOf(value));
               return options.indexOf(value);
             },
           };
+
           const connectArray = new Array(options.length).fill(false);
+          let startValue = options[0];
+
+          if (objExist) {
+            // check if the rating is already exist
+            objExist.rating.forEach((obj) => {
+              if (obj.isot_rating_id === sliderObj._id) {
+                startValue = options[obj.rating - 1];
+              }
+            });
+          }
+
+          console.log("startValue", startValue);
+          if (startValue == undefined) {
+            startValue = 1;
+          }
+
           connectArray[0] = true;
-          noUiSlider.create(spanSliderInnerDiv, {
-            start: options[0],
+          let noUiSliderElement = noUiSlider.create(spanSliderInnerDiv, {
+            start: [startValue],
             range: {
-              min: 1,
-              max: options.length,
+              min: 0,
+              max: options.length - 1,
             },
             step: 1,
             format: format,
             pips: { mode: "steps", format: format, density: 50 },
             connect: "lower",
           });
+          console.log(
+            noUiSliderElement,
+            "noUiSliderElement",
+            spanSliderInnerDiv
+          );
+
           spanSliderInnerDiv.classList.add("slider");
         }
         modalBodyGet.appendChild(htmlElementLabel);
         modalBodyGet.appendChild(spanSliderInnerDiv);
+
+        // if (objExist) {
+        //   // check if the rating is already exist
+        //   objExist.rating.forEach((obj) => {
+        //     if (obj.isot_rating_id === sliderObj._id) {
+        //       console.log("silder object", obj, "obj.rating");
+        //       spanSliderInnerDiv.set(obj.rating);
+        //     }
+        //   });
+        // }
       });
       var sliderStyleConnect = document.createElement("style");
       sliderStyleConnect.innerHTML =
@@ -2673,13 +3593,11 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
       // Retrieving data value from the radio buttons and sliders
       arbitraryValuesForSlider.forEach((sliderObj) => {
         if (sliderObj.rating_scale_label.length === 2) {
-          const radioInputs = document.getElementsByName(
-            `rating-${sliderObj._id}`
-          );
+          const radioInputs = document.getElementsByName(`${sliderObj._id}`);
           radioInputs.forEach((input) => {
             if (input.checked) {
               inputData.push({
-                isot_rating_id: input?.id,
+                isot_rating_id: input?.name,
                 rating: parseInt(input.value),
                 comment: comment,
               });
@@ -2763,7 +3681,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
                 iElement.parentElement.remove();
                 delete_skill(skill.id);
                 console.log("refess the connect");
-                this.createListProfileSkills();
+                // this.createListProfileSkills();
               });
               button.appendChild(iElement);
 
@@ -2848,7 +3766,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           console.log("delted the skill", skill, skill.isot_file_id);
           delete_skill(skill.isot_file_id);
           console.log("refess the connect");
-          // this.createListProfileSkills();
+          this.createListProfileSkills();
         });
         button.appendChild(iElement);
 
@@ -2945,6 +3863,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
       rateButton.style.fontWeight = "normal";
     }
     this.cardBodyDiv = cardBodyDiv;
+    console.log("cardBodyDiv", this.cardBodyDiv);
     if (skillDetail?.term) {
       addTosessionStorage(skillDetail.skills[0]);
     }
@@ -2957,7 +3876,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
       cardTitleH4.appendChild(rateButton);
     }
     cardBodyDiv.appendChild(cardTitleH4);
-    this.createSkillPath(cardBodyDiv, getListFromsessionStorage());
+    this.createSkillPath(this.cardBodyDiv, getListFromsessionStorage());
     if (skillDetail?.skills?.length > 0) {
       skillDetail.skills.forEach((skill) => {
         // clearsessionStorage();
@@ -2980,7 +3899,8 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
 
     // Create the tab navigation li elements
     const tabNavLi1 = document.createElement("li");
-    tabNavLi1.classList.add("nav-item");
+
+    tabNavLi1.classList.add("nav-item ");
     tabNavLi1.setAttribute("role", "presentation");
 
     const tabNavLi2 = document.createElement("li");
@@ -3098,7 +4018,295 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
       })
       .catch((err) => console.error(err));
   }
+  appendQuickViewContent() {
+    const skillsData = getListFromlocalStorage(); // Assuming this  retrieves the skills data
 
+    if (!skillsData || skillsData.length === 0) {
+      document.getElementById("quickViewContentDiv").innerHTML =
+        "<br>No skills data available.";
+      return;
+    }
+    // Group skills based on tags
+    const groupedSkills = {};
+    skillsData.forEach((skill, index) => {
+      const tagsString = this.getTags(skill.isot_file.tags);
+      if (!groupedSkills[tagsString]) {
+        groupedSkills[tagsString] = [];
+      }
+      groupedSkills[tagsString].push({ ...skill, index });
+    });
+
+    // Append content to quickViewContentDiv
+    const quickViewContentDiv = document.getElementById("quickViewContentDiv");
+    quickViewContentDiv.innerHTML = "";
+
+    for (const tagsString in groupedSkills) {
+      const skillsGroup = groupedSkills[tagsString];
+      console.log(skillsGroup, "skillsGroup");
+
+      const section = document.createElement("section");
+      const tagElement = document.createElement("div");
+      const skillsContainer = document.createElement("div");
+
+      tagElement.className = "tag mb-2 mt-3 fw-bold";
+      skillsContainer.className = "d-flex flex-wrap gap-3 mb-4";
+
+      tagElement.innerText = tagsString;
+      section.appendChild(tagElement);
+
+      skillsGroup.forEach((skill) => {
+        const skillContainer = document.createElement("div");
+        skillContainer.className =
+          "btn-rounded border d-flex align-items-center gap-2 px-2";
+        skillContainer.style.fontSize = "14px";
+        skillContainer.style.padding = "6px 0px";
+
+        const skillName = document.createElement("span");
+        skillName.innerHTML = "&nbsp;&nbsp;" + skill.isot_file.name;
+        skillContainer.appendChild(skillName);
+
+        const ratingButton = document.createElement("button");
+        ratingButton.className = "btn btn-rounded shadow-0 random-color-button";
+        if (skill.rating[0].rating) {
+          ratingButton.innerHTML =
+            skill.rating[0].rating +
+            "/" +
+            skill.isot_file.ratings[0].rating_scale_label.length +
+            " Rating";
+          skillContainer.appendChild(ratingButton);
+        } else {
+          ratingButton.innerHTML = "";
+        }
+
+        const deleteIcon = document.createElement("i");
+        deleteIcon.className = "fas fa-trash";
+        deleteIcon.setAttribute("data-mdb-tooltip-init", "");
+        deleteIcon.style.color = "#f14749";
+        deleteIcon.setAttribute("title", "Click to Delete");
+        skillContainer.appendChild(deleteIcon);
+
+        const editIcon = document.createElement("i");
+        editIcon.className = "fas fa-pen";
+        editIcon.style.color = "#3a76d0";
+        editIcon.setAttribute("data-mdb-tooltip-init", "");
+        editIcon.setAttribute("title", "Click to edit");
+        skillContainer.appendChild(editIcon);
+
+        console.log(deleteIcon);
+        editIcon.addEventListener("click", () => {
+          console.log("editing things", skill.isot_file);
+
+          this.changeRateModelElement(skill.isot_file);
+          // console.log("delete the skill", skill);
+          // // delete_skill(skill.id);
+          // console.log("refess the connect", skill.index);
+
+          // this.createListProfileSkills();
+        });
+
+        deleteIcon.addEventListener("click", () => {
+          console.log("delete the skill", skill);
+          // delete_skill(skill.id);
+          console.log("refess the connect", skill.index);
+
+          this.deleteSkillsFromLocalStorage(skill.index);
+          skillContainer.remove();
+
+          // this.createListProfileSkills();
+        });
+
+        skillsContainer.appendChild(skillContainer);
+      });
+
+      section.appendChild(skillsContainer);
+      quickViewContentDiv.appendChild(section);
+    }
+  }
+
+  appendTabularViewContent() {
+    const skillsData = getListFromlocalStorage(); // Assuming this function retrieves the skills data
+
+    if (!skillsData || skillsData.length === 0) {
+      document.getElementById("tabularViewContentView").innerHTML =
+        "No skills data available.";
+      return;
+    }
+
+    // Group skills based on tags
+    const groupedSkills = {};
+    skillsData.forEach((skill, index) => {
+      const tagsString = this.getTags(skill.isot_file.tags);
+      if (!groupedSkills[tagsString]) {
+        groupedSkills[tagsString] = [];
+      }
+      groupedSkills[tagsString].push({ ...skill, index });
+    });
+
+    // Append content to tabularViewContentView
+    const tabularViewContentDiv = document.getElementById(
+      "tabularViewContentView"
+    );
+    const accordionContainer = document.createElement("div");
+    accordionContainer.className = "accordion";
+    const accordionIdPrefix = "accordion";
+
+    let accordionIndex = 1;
+
+    for (const tagsString in groupedSkills) {
+      const skillsGroup = groupedSkills[tagsString];
+
+      const accordionItem = document.createElement("div");
+      accordionItem.className = "accordion-item";
+
+      const accordionHeader = document.createElement("h2");
+      accordionHeader.className = "accordion-header";
+
+      const accordionButton = document.createElement("button");
+      accordionButton.setAttribute("data-mdb-collapse-init", true);
+      accordionButton.className = "accordion-button";
+      accordionButton.type = "button";
+      accordionButton.setAttribute("data-mdb-toggle", "collapse");
+      accordionButton.setAttribute(
+        "data-mdb-target",
+        `#${accordionIdPrefix}-collapse-${accordionIndex}`
+      );
+      accordionButton.setAttribute("aria-expanded", "true");
+      accordionButton.setAttribute(
+        "aria-controls",
+        `${accordionIdPrefix}-collapse-${accordionIndex}`
+      );
+      accordionButton.style.backgroundColor = "#eff5ff";
+
+      const headerContent = document.createElement("div");
+      headerContent.className = "d-flex gap-3 align-items-center";
+
+      const tagTitle = document.createElement("b");
+      tagTitle.innerText = tagsString;
+
+      const skillsCount = document.createElement("span");
+      skillsCount.innerText = `${skillsGroup.length} elements selected`;
+
+      const dot = document.createElement("i");
+      dot.className = "fa fa-xs fa-circle me-1";
+      dot.style.fontSize = "8px";
+
+      headerContent.appendChild(tagTitle);
+      headerContent.appendChild(dot);
+      headerContent.appendChild(skillsCount);
+
+      accordionButton.appendChild(headerContent);
+      accordionHeader.appendChild(accordionButton);
+
+      const accordionCollapse = document.createElement("div");
+      accordionCollapse.id = `${accordionIdPrefix}-collapse-${accordionIndex}`;
+      accordionCollapse.className = "accordion-collapse collapse show";
+      accordionCollapse.setAttribute(
+        "aria-labelledby",
+        `${accordionIdPrefix}-heading-${accordionIndex}`
+      );
+
+      const accordionBody = document.createElement("div");
+      accordionBody.className = "accordion-body p-0";
+      skillsGroup.forEach((skill, index) => {
+        const skillContainer = document.createElement("div");
+        skillContainer.className =
+          "taggedSkills d-flex flex-wrap align-items-center justify-content-between gap-3";
+
+        const skillName = document.createElement("div");
+        skillName.className = "bg-";
+        skillName.innerHTML =
+          `${
+            skill.isot_file.name
+          } <span class="badge rounded-pill badge-primary">${
+            getExpertiseLevel(skill.rating, skill.isot_file.ratings)
+              ? getExpertiseLevel(skill.rating, skill.isot_file.ratings)
+              : ""
+          }</span>` || "Skill Name Not Available";
+
+        const skillDetails = document.createElement("div");
+        skillDetails.className = "d-flex ";
+
+        const experienceDetails = document.createElement("div");
+        experienceDetails.className = "px-3 border-end border-2";
+        experienceDetails.innerHTML = `<i class="fa fa-lg fa-calendar-days me-1 text-primary"></i> ${getExperienceLevel(
+          skill.rating[0].rating
+        )}`;
+
+        const ratingDetails = document.createElement("div");
+        ratingDetails.className = "ps-3 border-end border-2  px-2";
+        ratingDetails.innerText = `${skill.rating[0].rating}/${skill.isot_file.ratings[0].rating_scale_label.length} Rating`;
+
+        const actionsIconDiv = document.createElement("div");
+        actionsIconDiv.className = "ps-3";
+        const deleteIcon = document.createElement("i");
+        deleteIcon.className = "fas fa-trash me-3";
+        deleteIcon.style.color = "#f14749";
+        deleteIcon.setAttribute("data-mdb-tooltip-init", "");
+        deleteIcon.setAttribute("title", "Click to Delete");
+        actionsIconDiv.appendChild(deleteIcon);
+
+        const editIcon = document.createElement("i");
+        editIcon.className = "fas fa-pen";
+        editIcon.setAttribute("data-mdb-tooltip-init", "");
+        editIcon.setAttribute("title", "Click to edit");
+        editIcon.style.color = "#3a76d0";
+        actionsIconDiv.appendChild(editIcon);
+
+        if (skill.rating[0].rating) {
+          skillDetails.appendChild(ratingDetails);
+          skillDetails.appendChild(experienceDetails);
+        }
+        skillDetails.appendChild(actionsIconDiv);
+
+        skillContainer.appendChild(skillName);
+        skillContainer.appendChild(skillDetails);
+        // skillContainer.appendChild(deleteIcon);
+
+        deleteIcon.addEventListener("click", () => {
+          console.log("delete the skill", skill);
+          // delete_skill(skill.id);
+          console.log("refess the connect", skill.index);
+
+          this.deleteSkillsFromLocalStorage(skill.index);
+          skillContainer.remove();
+          this.updateProfileData();
+
+          // this.createListProfileSkills();
+        });
+
+        editIcon.addEventListener("click", () => {
+          console.log("editing things", skill.isot_file);
+
+          this.changeRateModelElement(skill.isot_file);
+          // console.log("delete the skill", skill);
+          // // delete_skill(skill.id);
+          // console.log("refess the connect", skill.index);
+
+          // this.createListProfileSkills();
+        });
+
+        // Check if the skill container is the last child
+        if (index < skillsGroup.length - 1) {
+          skillContainer.classList.add("border-bottom", "p-3");
+        } else {
+          skillContainer.classList.add("p-3"); // No border-bottom for the last child
+        }
+
+        accordionBody.appendChild(skillContainer);
+      });
+
+      accordionCollapse.appendChild(accordionBody);
+      accordionItem.appendChild(accordionHeader);
+      accordionItem.appendChild(accordionCollapse);
+
+      accordionContainer.appendChild(accordionItem);
+      accordionIndex++;
+    }
+
+    // Append the generated content to the tabularViewContentView div
+    tabularViewContentDiv.innerHTML = "";
+    tabularViewContentDiv.appendChild(accordionContainer);
+  }
   softLanguageProficiencySkillAPI() {
     let skillId = "files/a54b2fe8-dfce-4ff8-977d-af63d7777e89";
     let url = "";
@@ -3154,6 +4362,15 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
       .catch((err) => console.error(err));
   }
 
+  deleteSkillsFromLocalStorage(index) {
+    let userRatedSkills = JSON.parse(
+      localStorage.getItem("userRatedSkills", "[]")
+    );
+    // delete the skills by index
+    userRatedSkills.splice(index, 1);
+    localStorage.setItem("userRatedSkills", JSON.stringify(userRatedSkills));
+    this.updateProfileData();
+  }
   childrenSkillAPI(skillId, identifier, parentIdOfHirarchy = "") {
     // Get the element with the class ".card-body"
     const skillIdElement = document.getElementById(
@@ -3215,7 +4432,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           skillIdElement.removeChild(loader);
           skillIdElement.innerHTML = previousContent;
         })
-        .finally((err) => { });
+        .finally((err) => {});
     } else {
       const previousContent = selectedSkillDiv.innerHTML;
       // Create and append the loader
@@ -3253,21 +4470,19 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
                 console.log("get-recommendations", response);
 
                 if (response.length > 0) {
-
                   const h5 = document.createElement("div");
                   h5.setAttribute("class", "card-title text-start");
                   h5.style.margin = "30px 0px";
                   h5.textContent = "Related Skills";
 
                   this.cardBodyDiv.appendChild(h5);
-                  
+
                   this.createSelectSkillsChildBox(
                     this.cardBodyDiv,
                     response,
                     "Related Skills",
                     skillId
                   );
-
                 }
 
                 // if (response.length > 0) {
@@ -3310,7 +4525,6 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
                 //     recFlex.appendChild(button);
                 //   });
 
-
                 //   recCon.appendChild(recFlex);
 
                 //   this.cardBodyDiv.appendChild(recCon);
@@ -3320,7 +4534,6 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
             .catch((error) => {
               console.error(error);
             });
-
 
           this.createSelectSkillsChildBox(
             this.cardBodyDiv,
@@ -3336,6 +4549,26 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           console.error(err);
         });
     }
+  }
+  updateProfileData() {
+    this.appendQuickViewContent();
+
+    const existingColors = [];
+    var buttons = document.getElementsByClassName("random-color-button");
+
+    for (var i = 0; i < buttons.length; i++) {
+      const randomColor = getRandomColor(existingColors);
+      const randomColorWithOpacity = addLightOpacity(randomColor, 0.1);
+
+      buttons[i].style.color = `${randomColor}`;
+      buttons[i].style.border = `1px solid ${randomColor}`;
+      buttons[i].style.background = randomColorWithOpacity;
+    }
+    applyRandomColor(buttons);
+    this.appendTabularViewContent();
+  }
+  getTags(tags) {
+    return tags.map((tag) => tag.title).join(", ");
   }
 
   treeSkillAPI(cardBodyDiv, skillId) {
@@ -3386,7 +4619,7 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           }
         })
         .then((response) => {
-          // this.createSkillPath(cardBodyDiv, response.ancestors);
+          // this.createSkillPath(cardBodyDiv, response.ancestors);FromlocalStorage
           if (response.siblings.length > 0) {
             this.createSelectSkillsChildBox(
               this.cardBodyDiv,
@@ -3395,6 +4628,9 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
           } else {
             this.childrenSkillAPI(skillId);
           }
+          setTimeout(() => {
+            document.getElementById("rateBtn").click();
+          }, 3000);
         })
         .catch((err) => {
           console.error(err);
@@ -3402,3 +4638,103 @@ class IysFunctionalAreasPlugin extends IysSearchPlugin {
     }
   }
 }
+
+/**
+ * Profile page
+ */
+
+// Helper function to get tags as a string
+
+// Helper function to get experience level
+function getExperienceLevel(rating) {
+  const experienceLevels = [
+    "0 - 2 years",
+    "2 - 5 years",
+    "5 - 10 years",
+    "10+ years",
+  ];
+  return experienceLevels[rating - 1] || "Not specified";
+}
+
+function getRandomColor(existingColors) {
+  const letters = "0123456789ABCDEF";
+  let color;
+
+  do {
+    color =
+      "#" +
+      Array.from(
+        { length: 6 },
+        () => letters[Math.floor(Math.random() * 16)]
+      ).join("");
+  } while (existingColors.includes(color) || isColorTooLight(color));
+
+  existingColors.push(color);
+  return color;
+}
+
+function isColorTooLight(color) {
+  const rgbColor = hexToRgb(color);
+  const luminance =
+    (0.299 * rgbColor[0] + 0.587 * rgbColor[1] + 0.114 * rgbColor[2]) / 255;
+  return luminance > 0.5;
+}
+
+function hexToRgb(hex) {
+  return hex.match(/[A-Fa-f0-9]{2}/g).map((v) => parseInt(v, 16));
+}
+
+function addLightOpacity(color, opacity) {
+  opacity = opacity >= 0 && opacity <= 1 ? opacity : 0.5;
+  const rgbColor = hexToRgb(color);
+  return `rgba(${rgbColor[0]}, ${rgbColor[1]}, ${rgbColor[2]}, ${opacity})`;
+}
+
+const existingColors = [];
+var buttons = document.getElementsByClassName("random-color-button");
+
+for (var i = 0; i < buttons.length; i++) {
+  const randomColor = getRandomColor(existingColors);
+  const randomColorWithOpacity = addLightOpacity(randomColor, 0.1);
+
+  buttons[i].style.color = `${randomColor}`;
+  buttons[i].style.border = `1px solid ${randomColor}`;
+  buttons[i].style.background = randomColorWithOpacity;
+}
+
+function applyRandomColor(buttons) {
+  const existingColors = [];
+
+  for (let i = 0; i < buttons.length; i++) {
+    const randomColor = getRandomColor(existingColors);
+    const randomColorWithOpacity = addLightOpacity(randomColor, 0.1);
+
+    buttons[i].style.color = `${randomColor}`;
+    buttons[i].style.border = `1px solid ${randomColor}`;
+    buttons[i].style.background = randomColorWithOpacity;
+  }
+}
+
+function getExpertiseLevel(ratingValue, ratingLabel) {
+  // Assuming the rating category for expertise level is 'Expertise Level'
+  const expertiseLevelRating = ratingLabel.find(
+    (r) => r.rating_category === "Expertise Level"
+  );
+  if (expertiseLevelRating) {
+    const labelIndex = ratingValue.find(
+      (r) => r.isot_rating_id === expertiseLevelRating._id
+    );
+    return expertiseLevelRating.rating_scale_label[labelIndex.rating - 1];
+  }
+  return 0;
+}
+function openProfileTab() {
+  var profileButton = document.getElementById("profile-tab0");
+  if (profileButton) {
+    profileButton.click();
+  }
+}
+
+// document.addEventListener("DOMContentLoaded", function () {
+//   updateProfileData();
+// });
